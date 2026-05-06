@@ -1,0 +1,23 @@
+# Generated artifacts
+app/data/graph.json
+app/data/wiki-index.json
+app/data/similarity.json
+app/data/relations.json
+
+# Local secrets — never commit real API keys
+app/config.js
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

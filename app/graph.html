@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Graph — Lumi Codebase Wiki</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo"><span class="dot"></span>Lumi Codebase Wiki</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a class="active" href="graph.html">Graph</a>
+    <a href="wiki.html">Wiki</a>
+    <a href="chat.html">Chat</a>
+  </nav>
+  <div class="search-box">
+    <input class="search" id="search" placeholder="Search nodes + pages (⌘K)" autocomplete="off">
+    <div class="search-results" id="search-results"></div>
+  </div>
+</header>
+
+<div class="graph-shell">
+
+  <aside class="graph-sidebar">
+    <h4>Layers</h4>
+    <div id="layer-chips"></div>
+    <p style="font-size: 11px; color: var(--fg-muted); margin: 4px 0 0;">
+      Structural = imports, pubsub, etc.<br>
+      Similarity = TF-IDF cosine, mutual top-K.<br>
+      Relations = LLM-extracted typed facts.
+    </p>
+
+    <h4>Layout</h4>
+    <div class="layout-toggle">
+      <button data-layout="fcose" class="active">Force</button>
+      <button data-layout="cose">Spread</button>
+      <button data-layout="concentric">Radial</button>
+    </div>
+
+    <h4>Filter by repo</h4>
+    <div id="repo-chips"></div>
+
+    <h4>Filter by type</h4>
+    <div id="type-chips"></div>
+
+    <h4>Edge kinds</h4>
+    <div id="edge-chips"></div>
+
+    <h4>Tip</h4>
+    <p style="font-size: 12px; color: var(--fg-muted);">
+      Click a node to read its wiki page. Drag to reposition. Scroll to zoom. Click empty space to clear highlight.
+    </p>
+
+    <h4>Counts</h4>
+    <div id="counts" style="font-size: 12px; color: var(--fg-muted);">…</div>
+  </aside>
+
+  <div id="cy"></div>
+
+  <aside class="graph-side-panel empty" id="panel">
+    <div>
+      <p style="margin: 0 0 8px;">Click any node to see its wiki page here.</p>
+      <p style="font-size: 13px; margin: 0;">Try <strong>monitors:colour</strong> or <strong>core:Detection</strong>.</p>
+    </div>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.0/dist/cytoscape.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+<script src="assets/js/search.js"></script>
+<script src="assets/js/graph.js"></script>
+
+</body>
+</html>

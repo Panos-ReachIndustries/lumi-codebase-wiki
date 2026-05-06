@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chat — Lumi Codebase Wiki</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo"><span class="dot"></span>Lumi Codebase Wiki</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="graph.html">Graph</a>
+    <a href="wiki.html">Wiki</a>
+    <a class="active" href="chat.html">Chat</a>
+  </nav>
+  <div class="search-box">
+    <input class="search" id="search" placeholder="Search the wiki + graph (⌘K)" autocomplete="off">
+    <div class="search-results" id="search-results"></div>
+  </div>
+</header>
+
+<div class="chat-shell">
+
+  <div class="chat-status" id="status">
+    <span class="spinner"></span>
+    <span>Loading wiki + graph context…</span>
+  </div>
+
+  <div class="chat-stream" id="stream">
+    <div class="chat-empty" id="empty">
+      <h2>Ask the codebase</h2>
+      <p>Grounded in <strong>85 wiki pages</strong>, <strong>107 graph nodes</strong>, and the LLM-extracted typed relations.</p>
+      <p style="font-size: 13px; margin-top: 22px;">Citations link back into the wiki. Answers stream from Gemini 2.5 Flash.</p>
+    </div>
+  </div>
+
+  <div class="chat-input-bar">
+    <form id="form">
+      <textarea id="input" placeholder="Ask a question — e.g. 'How does the colour monitor end up in the experiment live view?'" rows="1"></textarea>
+      <button type="submit" id="send" disabled>Send</button>
+    </form>
+    <div class="chat-suggestions" id="suggestions">
+      <button data-q="What's the difference between protocol arbiter v1, v2, and v3?">Arbiter v1 vs v2 vs v3</button>
+      <button data-q="Trace the data path from a camera to the experiment live view in the web app.">Trace camera → web</button>
+      <button data-q="Which V2 modules does the custom agent compose, and how does aiAgents in the web app talk to it?">Custom agent composition</button>
+      <button data-q="If I'm onboarding today, what's the smallest example I should read first?">Where to start</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="config.js" onerror="window.__configMissing = true"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+<script src="assets/js/search.js"></script>
+<script src="assets/js/chat.js"></script>
+
+</body>
+</html>

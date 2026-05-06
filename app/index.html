@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lumi Codebase Wiki</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo"><span class="dot"></span>Lumi Codebase Wiki</div>
+  <nav>
+    <a class="active" href="index.html">Home</a>
+    <a href="graph.html">Graph</a>
+    <a href="wiki.html">Wiki</a>
+    <a href="chat.html">Chat</a>
+  </nav>
+  <div class="search-box">
+    <input class="search" id="search" placeholder="Search the wiki + graph (⌘K)" autocomplete="off">
+    <div class="search-results" id="search-results"></div>
+  </div>
+</header>
+
+<main class="landing">
+
+  <section class="hero">
+    <h1>Welcome to Lumi</h1>
+    <p class="subtitle">
+      A new-hire companion for the three Lumi repos.
+      Read the wiki, click around the graph, follow a guided tour.
+      Everything is local — no backend, no creds.
+    </p>
+    <div class="cta">
+      <a class="btn" href="wiki.html?p=wiki/tour/day-1.md">Start the Day 1 tour</a>
+      <a class="btn secondary" href="graph.html">Open the graph</a>
+    </div>
+  </section>
+
+  <div class="stats" id="stats">
+    <div class="stat"><div class="num" id="stat-nodes">—</div><div class="label">graph nodes</div></div>
+    <div class="stat"><div class="num" id="stat-edges">—</div><div class="label">graph edges</div></div>
+    <div class="stat"><div class="num" id="stat-pages">—</div><div class="label">wiki pages</div></div>
+    <div class="stat"><div class="num">3</div><div class="label">repos</div></div>
+  </div>
+
+  <div class="section-title">Tours</div>
+  <div class="cards tour-cards">
+    <div class="card">
+      <h3>Day 1</h3>
+      <p>The 90-minute tour: read the spine, walk one path end-to-end, get something running.</p>
+      <a href="wiki.html?p=wiki/tour/day-1.md">Start →</a>
+    </div>
+    <div class="card">
+      <h3>Week 1</h3>
+      <p>Deepen across all three repos. By the end you can sketch the data flow without notes.</p>
+      <a href="wiki.html?p=wiki/tour/week-1.md">Open →</a>
+    </div>
+    <div class="card">
+      <h3>Month 1</h3>
+      <p>From reader to contributor. Ship your first PR; improve this wiki.</p>
+      <a href="wiki.html?p=wiki/tour/month-1.md">Open →</a>
+    </div>
+  </div>
+
+  <div class="section-title">Quick links</div>
+  <div class="cards">
+    <div class="card">
+      <h3>System overview</h3>
+      <p>The cross-repo data flow, in one diagram.</p>
+      <a href="wiki.html?p=wiki/architecture/system-overview.md">Read →</a>
+    </div>
+    <div class="card">
+      <h3>Kafka topics</h3>
+      <p>Every topic, who produces, who consumes.</p>
+      <a href="wiki.html?p=wiki/architecture/kafka-topics.md">Read →</a>
+    </div>
+    <div class="card">
+      <h3>Glossary</h3>
+      <p>Domain jargon. Skim before standup.</p>
+      <a href="wiki.html?p=wiki/glossary.md">Read →</a>
+    </div>
+    <div class="card">
+      <h3>colour monitor</h3>
+      <p>Smallest production monitor. Read this for the pattern.</p>
+      <a href="wiki.html?p=wiki/ai-continuous/monitors/colour.md">Read →</a>
+    </div>
+    <div class="card">
+      <h3>V2.Detection</h3>
+      <p>The most-imported V2 module. Sets the schema.</p>
+      <a href="wiki.html?p=wiki/ai-core/modules/Detection.md">Read →</a>
+    </div>
+    <div class="card">
+      <h3>web/api/devices</h3>
+      <p>Cleanest API domain in lumi-web-v2. Shows the pattern.</p>
+      <a href="wiki.html?p=wiki/web/api-domains/devices.md">Read →</a>
+    </div>
+  </div>
+
+  <div class="section-title">Onboarding checklist</div>
+  <div class="card">
+    <p style="font-size: 13px; color: var(--fg-muted); margin: 0 0 10px;">
+      Saved in your browser — closes when you close this tab.
+    </p>
+    <div class="checklist" id="checklist">
+      <label><input type="checkbox" data-id="c1"> Read <a href="wiki.html?p=wiki/overview.md">overview.md</a></label>
+      <label><input type="checkbox" data-id="c2"> Read <a href="wiki.html?p=wiki/architecture/system-overview.md">system overview</a></label>
+      <label><input type="checkbox" data-id="c3"> Open the <a href="graph.html">graph</a> and click three nodes</label>
+      <label><input type="checkbox" data-id="c4"> Walk the colour → V2.Colours → MONITOR_DATA_TOPIC → arbiter:v2 path</label>
+      <label><input type="checkbox" data-id="c5"> Skim the <a href="wiki.html?p=wiki/glossary.md">glossary</a></label>
+      <label><input type="checkbox" data-id="c6"> Pick one repo and get it running locally</label>
+      <label><input type="checkbox" data-id="c7"> Read one V2 module README front-to-back</label>
+      <label><input type="checkbox" data-id="c8"> Ask Claude to fill in one stub page that mattered to you</label>
+    </div>
+  </div>
+
+  <footer>
+    Generated from <code>graph.json</code> + <code>wiki/</code>. Maintained by Claude per <a href="../CLAUDE.md">CLAUDE.md</a>.
+  </footer>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+<script src="assets/js/search.js"></script>
+<script>
+  // Stats
+  fetch('data/graph.json').then(r => r.json()).then(g => {
+    document.getElementById('stat-nodes').textContent = g.meta.counts.nodes;
+    document.getElementById('stat-edges').textContent = g.meta.counts.edges;
+  }).catch(() => {});
+  fetch('data/wiki-index.json').then(r => r.json()).then(w => {
+    document.getElementById('stat-pages').textContent = w.count;
+  }).catch(() => {});
+
+  // Checklist persistence
+  document.querySelectorAll('.checklist input').forEach(cb => {
+    const id = cb.dataset.id;
+    if (localStorage.getItem('lumi-check-' + id) === '1') {
+      cb.checked = true;
+      cb.closest('label').classList.add('done');
+    }
+    cb.addEventListener('change', () => {
+      localStorage.setItem('lumi-check-' + id, cb.checked ? '1' : '0');
+      cb.closest('label').classList.toggle('done', cb.checked);
+    });
+  });
+
+  // ⌘K / Ctrl+K focuses search
+  window.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('search').focus();
+    }
+  });
+</script>
+
+</body>
+</html>

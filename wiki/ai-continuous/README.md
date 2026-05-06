@@ -18,7 +18,7 @@ For the per-area deep dives, see the linked pages below. For environment variabl
 
 | Family | Folder | Language | What it does |
 |--------|--------|----------|--------------|
-| **Monitors** | `monitors/` | Python | One long-lived process per AI function (colour, dial, text, hands, liquids/*, objects, anonymiser, custom). Reads frames, calls a [V2 module](../ai-core/V2/README.md), prints `DATA:` lines. See [colour monitor](monitors/colour.md) for the canonical example. |
+| **Monitors** | `monitors/` | Python | One long-lived process per AI function (colour, dial, text, hands, liquids/*, objects, anonymiser, custom). Reads frames, calls a V2 module from [ai-core](../ai-core/README.md), prints `DATA:` lines. See [colour monitor](monitors/colour.md) for the canonical example. |
 | **Arbiters** | `protocol_arbiter/`, `protocol_arbiter_v2/`, `protocol_arbiter_v3/` | Python | Orchestrate experiment protocols. [v1](arbiters/v1.md) (legacy stage/step/action), [v2](arbiters/v2.md) (production, flat instruction IDs), [v3](arbiters/v3.md) (in-progress redesign with pure domain layer). |
 | **monitor_relay** | `monitor_relay/` | Go | Bridges WebRTC camera streams into local UDP ports, spawns and supervises monitor processes, parses their stdout, publishes results to Kafka. HTTP API for the web app's `devices` domain. See [monitor_relay](monitor-relay.md). |
 | **Common** | `Common/` | Python | The shared platform layer: `StreamReporter` + `StreamCapture` base classes, Kafka connection pool, circuit breakers, phase-marker profiling, resource cleanup. See [Common](common.md). |

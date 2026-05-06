@@ -28,7 +28,7 @@ const useCreateAiAgent = () =>
       data: request
     }),
     errorCodeMap,
-    getKeysToInvalidate: () => [[queryCacheKeys.activeAiAgentsByDeviceList]]
+    getKeysToInvalidate: () => [`queryCacheKeys.activeAiAgentsByDeviceList`]
   });
 ```
 

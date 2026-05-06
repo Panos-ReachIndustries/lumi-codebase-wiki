@@ -27,11 +27,11 @@ const useCreateMoment = () =>
       data: request
     }),
     errorCodeMap,
-    getKeysToInvalidate: () => [[queryCacheKeys.momentsList]]
+    getKeysToInvalidate: () => [`queryCacheKeys.momentsList`]
   });
 ```
 
-Same canonical shape: `useConfiguredMutation` from `useRemoteData.ts`, route from `gatewayRoutes.moments.*`, types from `src/types/generated/`, mutations invalidate `momentsList` (and `[moment, id]` for single-moment updates).
+Same canonical shape: `useConfiguredMutation` from `useRemoteData.ts`, route from `gatewayRoutes.moments.*`, types from `src/types/generated/`, mutations invalidate `momentsList` (and ``[queryCacheKeys.moment, id]`` for single-moment updates).
 
 ## What lives in the folder
 

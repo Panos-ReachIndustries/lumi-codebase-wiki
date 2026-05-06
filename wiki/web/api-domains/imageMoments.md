@@ -26,7 +26,7 @@ const useUploadImageMomentRequest = () =>
       onUploadProgress: (e) => request.onProgress?.(e)
     }),
     errorCodeMap,
-    getKeysToInvalidate: () => [[queryCacheKeys.imageMomentsList]]
+    getKeysToInvalidate: () => [`queryCacheKeys.imageMomentsList`]
   });
 ```
 

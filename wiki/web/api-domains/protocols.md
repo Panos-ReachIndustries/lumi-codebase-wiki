@@ -34,7 +34,7 @@ const useCreateProtocol = () =>
       };
     },
     errorCodeMap,
-    getKeysToInvalidate: () => [[queryCacheKeys.protocolsList]]
+    getKeysToInvalidate: () => [`queryCacheKeys.protocolsList`]
   });
 ```
 

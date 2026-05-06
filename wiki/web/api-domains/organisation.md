@@ -33,7 +33,7 @@ const useUploadOrganisationFile = () =>
       };
     },
     errorCodeMap,
-    getKeysToInvalidate: () => [[queryCacheKeys.organisationFilesList]]
+    getKeysToInvalidate: () => [`queryCacheKeys.organisationFilesList`]
   });
 ```
 

@@ -210,3 +210,24 @@ python tools/merge_relations.py --in extracted.json
 ```
 
 Allowed predicates: `USES` · `COMPOSES` · `PUBLISHES_TO` · `SUBSCRIBES_TO` · `DEPENDS_ON` · `IS_A_KIND_OF` · `EXAMPLE_OF` · `ALTERNATIVE_TO` · `MAINTAINED_BY` · `DOCUMENTED_BY` · `REFERENCED_BY`
+
+---
+
+## Retro
+
+### What worked well
+
+- **Parallel agent wiki passes** — spawning 8 agents simultaneously to read source files and write wiki pages was dramatically faster than sequential writing, and the output quality was high because each agent had a focused scope
+- **Three-layer graph architecture** — structural + TF-IDF similarity + LLM-typed relations gave genuinely different and complementary views without needing embeddings or a vector database
+- **TF-IDF as a free similarity layer** — pure stdlib, no API cost, instant to rebuild, and the clusters it surfaced (e.g. all the archive-reporter monitors grouped together) were accurate and useful
+- **Static site with no build step** — zero deployment friction; `python3 -m http.server` is all you need, which made iteration very fast
+- **Gemini full-context chat** — sending the entire wiki as context on every turn (rather than RAG chunking) gave much better answer coherence for a corpus this size; Gemini's implicit prompt cache made it affordable
+- **`CLAUDE.md` as a living schema** — having explicit conventions for page format and ingest workflows meant every agent-written page came out consistent without needing post-processing
+
+### What didn't work / would improve
+
+- **`fcose` layout CDN version skew** — the force-directed layout crashed on load due to a version mismatch between `cytoscape-fcose`, `cose-base`, and `layout-base` CDN packages; had to fall back to the built-in `cose` layout. A local bundle (npm + Vite or just vendored JS) would have avoided this entirely
+- **`belongs_to` edges broke the layout** — adding compound-parent edges to anchor every node to its repo caused a diagonal chain layout because the force simulation treated them as real attraction forces. Removing them and relying on visual colour-coding for repo grouping fixed it immediately
+- **First wiki pass was too thin** — the initial stub generation (`gen_stubs.py`) produced 2-line pages that added noise rather than value; the deep source-reading agent pass was needed to make the wiki actually useful. Should have skipped stubs and gone straight to source-backed pages
+- **Dynamic V2 imports were missed** — `build_graph.py` initially only detected `from V2.X import` style imports and missed the `importlib.import_module("Lumi-AI-Core.V2.X")` pattern used by several monitors, so cross-repo edges were under-counted until a second regex pass was added
+- **TF-IDF spurious 1.0 similarities** — nodes that shared the same wiki or source files got identical TF-IDF vectors and scored 1.0 similarity against each other, polluting the similarity layer with meaningless edges. Fixed by detecting shared bodies and skipping them, but this should have been in the design from the start

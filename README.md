@@ -1,8 +1,9 @@
 # Lumi Codebase Wiki
 
-Built by **Panos** and **Aaron** — a shared plan, two complementary focus areas:
-- **Panos** — UI design and app serving (graph viewer, wiki reader, chat interface, static site architecture)
-- **Aaron** — metadata extraction and wiki content (build tooling, source-code analysis, the 90+ `.md` pages)
+Built by Panos and Aaron through a shared brainstorming and planning effort, with each contributing complementary strengths to the mini-project:
+
+Aaron focused on the foundational approach and initial solution design through [onboarding_buddy_ai_tooling_exercise](https://github.com/Reach-Industries/onboarding_buddy_ai_tooling_exercise)
+Panos then used, expanded and evolved that foundation into this repository, using Aaron’s implementation as a stepping stone/backbone while driving the UI design, application serving layer, graph viewer, wiki reader, chat interface, and overall static-site experience.
 
 ---
 

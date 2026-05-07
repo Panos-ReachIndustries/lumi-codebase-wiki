@@ -12,53 +12,67 @@ The app is a static site: an interactive **cross-repo knowledge graph**, a **mar
 
 ---
 
-## Prerequisites
+## Getting started
 
-- Python 3.9+
-- The three repos cloned as siblings of this folder:
+### Step 0 — Folder layout
+
+This repo must sit next to the three Lumi repos:
 
 ```
 AI_Tooling_workshop/
-├── Lumi-AI-Continuous/
-├── Lumi-AI-Core/
-├── lumi-web-v2/
-└── lumi-codebase-wiki/   ← you are here
+├── Lumi-AI-Continuous/      ← must exist
+├── Lumi-AI-Core/            ← must exist
+├── lumi-web-v2/             ← must exist
+└── lumi-codebase-wiki/      ← you are here
 ```
 
----
+If any of the three repos is missing the build scripts will warn you (they do not crash — the missing repo simply produces no nodes).
 
-## Running the app
-
-### 1. Install dependencies
+### Step 1 — Install Python dependencies
 
 ```bash
-pip install -r tools/requirements.txt   # just PyYAML
+# From inside lumi-codebase-wiki/
+pip install -r tools/requirements.txt
 ```
 
-### 2. Build the graph data
+Only `PyYAML` is required. Python 3.9+ works.
+
+### Step 2 — Build the data files
+
+The graph, similarity, and search index are generated from the live repo state and are **not committed** (they live in `app/data/` which is gitignored). You must generate them at least once before opening the app.
 
 ```bash
 ./scripts/rebuild-all.sh
 ```
 
-This runs four steps in order and prints what it found:
+Expected output:
 
-| Step | Script | Output |
-|------|--------|--------|
-| Structural graph | `tools/build_graph.py` | `app/data/graph.json` — 107 nodes, 77 edges |
-| TF-IDF similarity | `tools/build_similarity.py` | `app/data/similarity.json` — 114 similarity edges |
-| Wiki index | `tools/build_index.py` | `app/data/wiki-index.json` + `wiki/index.md` |
-| Health check | `tools/lint_wiki.py` | Orphan/broken-link report (should say "Wiki is clean.") |
+```
+→ build_graph.py
+Wrote app/data/graph.json: 107 nodes, 77 edges
 
-> The generated files in `app/data/` are gitignored. Re-run `rebuild-all.sh` after pulling new repo changes.
+→ build_similarity.py
+Computed 114 mutual top-4 similarity edges (min score 0.1).
+  → app/data/similarity.json
 
-### 3. Serve
+→ build_index.py
+Indexed 89 pages. 0 missing frontmatter.
+  → wiki/index.md
+  → app/data/wiki-index.json
+
+→ lint_wiki.py
+Wiki is clean.
+```
+
+Re-run `rebuild-all.sh` any time you pull changes to the three repos.
+
+### Step 3 — Start the server
 
 ```bash
 ./scripts/serve.sh
 ```
 
-Open **http://localhost:8000/app/** in your browser.
+Then open **[http://localhost:8000/app/](http://localhost:8000/app/)** in your browser.
 
 To use a different port:
 
@@ -66,17 +80,45 @@ To use a different port:
 PORT=9000 ./scripts/serve.sh
 ```
 
-### 4. Enable Chat (optional)
+The server is just `python3 -m http.server` — it has no state and no API. Stopping it with Ctrl-C is safe.
 
-The Chat page calls the Gemini API from the browser. Each user provides their own key — nothing is stored server-side.
+### Step 4 — Enable Chat (optional)
+
+The Chat tab requires a Gemini API key. Each person provides their own — nothing is stored server-side.
 
 ```bash
 cp app/config.example.js app/config.js
-# open app/config.js and replace PASTE_YOUR_GEMINI_API_KEY_HERE
-# get a key at: https://aistudio.google.com/apikey
 ```
 
-`app/config.js` is gitignored. The default model is `gemini-2.5-flash` — the entire wiki (~70 k tokens) is sent as context on every turn. Gemini's prompt cache kicks in after turn 1, so follow-up questions are cheap.
+Open `app/config.js` and replace `PASTE_YOUR_GEMINI_API_KEY_HERE` with a real key. Get one free at **[aistudio.google.com/apikey](https://aistudio.google.com/apikey)**.
+
+```js
+window.LUMI_GEMINI = {
+  apiKey: "AIza...",            // ← your key
+  model:  "gemini-2.5-flash",   // or "gemini-2.5-pro" for heavier reasoning
+  temperature: 0.4,
+  maxOutputTokens: 4096,
+};
+```
+
+`app/config.js` is gitignored so your key is never committed. The entire wiki (~70 k tokens) is sent as context on every turn; Gemini's prompt cache discounts it after the first message, making follow-ups cheap.
+
+---
+
+## Full run summary (copy-paste)
+
+```bash
+# One-time setup
+pip install -r tools/requirements.txt
+cp app/config.example.js app/config.js   # then paste your Gemini key
+
+# Every time (after cloning, or after pulling repo changes)
+./scripts/rebuild-all.sh
+
+# Start the app
+./scripts/serve.sh
+# → open http://localhost:8000/app/
+```
 
 ---
 
@@ -84,82 +126,81 @@ cp app/config.example.js app/config.js
 
 ```
 lumi-codebase-wiki/
-├── app/                   Static viewer (HTML + Cytoscape.js + marked.js + Fuse.js)
-│   ├── index.html         Landing page — overview, tour cards, search
-│   ├── graph.html         Interactive knowledge graph
-│   ├── wiki.html          Markdown reader with sidebar TOC
-│   ├── chat.html          Gemini-powered Q&A
-│   ├── config.example.js  Template for your Gemini key (copy → config.js)
-│   └── data/              Generated JSON (gitignored — rebuilt by scripts)
-├── wiki/                  90+ markdown pages — one per repo component
-│   ├── overview.md        Start here
-│   ├── tour/              day-1 / week-1 / month-1 onboarding paths
-│   ├── architecture/      System overview, Kafka topics, repos, deployment
-│   ├── ai-continuous/     Monitors, arbiters, monitor-relay, common utils
-│   ├── ai-core/           V2 modules + agreed data schema
-│   ├── web/               Routes, API domains, Kubb pipeline, components
-│   └── concepts/          Monitor, arbiter, protocol, ledger, custom-agent
-├── tools/                 Python build scripts
-│   ├── build_graph.py     Walks 3 repos → graph.json
-│   ├── build_similarity.py  TF-IDF cosine → similarity.json
-│   ├── build_index.py     Reads wiki frontmatter → wiki-index.json
-│   ├── lint_wiki.py       Orphan/broken-link checker
-│   └── merge_relations.py Validates LLM-extracted typed triples → relations.json
+├── app/                    Static viewer (Cytoscape.js + marked.js + Fuse.js)
+│   ├── index.html          Landing page — overview + tour cards
+│   ├── graph.html          Interactive knowledge graph
+│   ├── wiki.html           Markdown reader with sidebar TOC
+│   ├── chat.html           Gemini-powered Q&A
+│   ├── config.example.js   Template — copy to config.js and add your key
+│   └── data/               Generated JSON files (gitignored)
+│       ├── graph.json       Structural graph (nodes + edges)
+│       ├── similarity.json  TF-IDF cosine edges
+│       ├── relations.json   LLM-extracted typed triples (committed)
+│       └── wiki-index.json  Search index
+├── wiki/                   90+ markdown pages
+│   ├── overview.md         Start here — what is Lumi in 200 words
+│   ├── tour/               day-1 / week-1 / month-1 reading paths
+│   ├── architecture/       System overview, Kafka topics, repos, deployment
+│   ├── ai-continuous/      Monitors, arbiters, monitor-relay, common utils
+│   ├── ai-core/            V2 modules + agreed data schema
+│   ├── web/                Routes, API domains, Kubb pipeline, components
+│   └── concepts/           Monitor, arbiter, protocol, ledger, custom-agent
+├── tools/
+│   ├── build_graph.py      Walks 3 repos → graph.json
+│   ├── build_similarity.py TF-IDF cosine → similarity.json
+│   ├── build_index.py      Reads wiki frontmatter → wiki-index.json + index.md
+│   ├── lint_wiki.py        Orphan/broken-link checker
+│   └── merge_relations.py  Validates LLM-extracted triples → relations.json
 ├── scripts/
-│   ├── rebuild-all.sh     Runs all four build steps in order
-│   └── serve.sh           python -m http.server wrapper
-└── CLAUDE.md              Wiki conventions — read this before editing any page
+│   ├── rebuild-all.sh      Runs all four build steps in order
+│   └── serve.sh            python -m http.server wrapper (respects $PORT)
+└── CLAUDE.md               Wiki schema — read before editing any page
 ```
 
 ---
 
-## The graph layers
+## Using the graph
 
-The graph has three independently toggleable layers (sidebar → Layers):
+The graph has three independently toggleable layers (sidebar → **Layers**):
 
 | Layer | What it shows | How it's built |
 |-------|---------------|----------------|
-| **Structural** (on by default) | Imports, Kafka pubsub, API contracts, route↔API↔backend bridges | AST + regex walk of all three repos |
-| **Similarity** | Pages that talk about the same things — no embeddings, pure TF-IDF cosine mutual top-K | `build_similarity.py` |
+| **Structural** (default on) | Imports, Kafka pubsub, API contracts, route↔backend bridges | AST + regex walk of all three repos |
+| **Similarity** | Components that talk about the same things (no embeddings — pure TF-IDF) | `build_similarity.py` |
 | **Relations** | Typed triples: `colour PUBLISHES_TO MONITOR_DATA_TOPIC`, `arbiter:v2 ALTERNATIVE_TO arbiter:v1`, … | LLM-extracted, validated by `merge_relations.py` |
 
-**Graph interactions:**
+**Interactions:**
 
-- **Click** a node → wiki page loads in the side panel
-- **Focus 2-hop ⬡** (button in side panel) → hides everything outside 2 connections; sidebar gets a reset button
-- **Similarity edges** auto-hide when zoomed out; reappear when zoomed in
-- **Relations edge labels** appear on hover only
-- Node **size** scales with number of connections (high-degree hubs are visually larger)
-- Filter chips in the sidebar toggle by repo, node type, or edge kind
+| Action | Effect |
+|--------|--------|
+| Click a node | Wiki page appears in the right panel |
+| Click **Focus 2-hop ⬡** (panel button) | Hides everything beyond 2 connections; sidebar shows a reset button |
+| Scroll / pinch | Zoom — similarity edges auto-hide below 0.55× zoom to reduce clutter |
+| Hover a Relations edge | Predicate label appears (hidden otherwise) |
+| Filter chips (sidebar) | Toggle visibility by repo, node type, or edge kind |
+| Click empty space | Clear highlight and reset dim |
+
+Node **size** reflects the number of connections — the most-connected hubs (like `core:Detection` and `topic:MONITOR_DATA_TOPIC`) are visually larger.
 
 ---
 
 ## Maintaining the wiki
 
-The wiki follows the [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern — Claude writes and revises pages, humans read. See `CLAUDE.md` for page format, naming conventions, and the ingest/lint workflows.
+The wiki follows the [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern — Claude writes and revises pages, humans read. See `CLAUDE.md` for page format, naming conventions, and ingest/lint workflows.
 
-**Adding a page:**
+**After adding or editing a wiki page:**
 
 ```bash
-# 1. Write wiki/your-section/page-name.md with correct frontmatter (see CLAUDE.md)
-# 2. Rebuild the index so the sidebar picks it up
-python tools/build_index.py
-# 3. Optional: re-run the graph if you added a new node-worthy entity
-python tools/build_graph.py
+python tools/build_index.py        # updates search index + sidebar
+python tools/build_graph.py        # only needed if you added a new node-worthy entity
 ```
 
-**Adding relations triples:**
+**Adding typed relation triples:**
 
 ```bash
-# Ask Claude to extract triples from a wiki page, save to a file, then:
+# Ask Claude to extract triples from a wiki page → save to extracted.json, then:
 python tools/merge_relations.py --in extracted.json
-# Invalid triples (unknown node IDs, bad predicates, self-loops) are rejected with reasons.
+# Unknown node IDs, bad predicates, self-loops are rejected with explanations.
 ```
 
-Allowed predicates: `USES`, `COMPOSES`, `PUBLISHES_TO`, `SUBSCRIBES_TO`, `DEPENDS_ON`, `IS_A_KIND_OF`, `EXAMPLE_OF`, `ALTERNATIVE_TO`, `MAINTAINED_BY`, `DOCUMENTED_BY`, `REFERENCED_BY`.
-
----
-
-## Why no embeddings?
-
-TF-IDF + LLM-typed triples gives ~95% of the value of a vector knowledge graph for a single-domain, English-only wiki at this scale — with zero infra and zero API cost for the similarity layer. Embeddings buy synonym tolerance and cross-language semantics; neither matters much for a 100-page onboarding wiki with a small controlled vocabulary.
+Allowed predicates: `USES` · `COMPOSES` · `PUBLISHES_TO` · `SUBSCRIBES_TO` · `DEPENDS_ON` · `IS_A_KIND_OF` · `EXAMPLE_OF` · `ALTERNATIVE_TO` · `MAINTAINED_BY` · `DOCUMENTED_BY` · `REFERENCED_BY`

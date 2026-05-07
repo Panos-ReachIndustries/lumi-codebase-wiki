@@ -2,27 +2,20 @@
 
 A lightweight onboarding companion for the three Lumi repos:
 
-- **Lumi-AI-Continuous** — Python + Go backend, monitors, arbiters, Kafka
-- **Lumi-AI-Core** — V2 AI/CV class libraries
-- **lumi-web-v2** — Next.js web app
+| Repo | What it is |
+|------|-----------|
+| **Lumi-AI-Continuous** | Python + Go backend — monitors, protocol arbiters, Kafka orchestration |
+| **Lumi-AI-Core** | Reusable V2 AI/CV modules (detection, tracking, segmentation, …) |
+| **lumi-web-v2** | Next.js web app — experiment dashboard, AI Assist, protocol viewer |
 
-It pairs an **interactive cross-repo knowledge graph** with an LLM-maintained markdown wiki and a **conversational layer** powered by Gemini, all served as static files. No build step. No backend. Just open `index.html`.
+The app is a static site: an interactive **cross-repo knowledge graph**, a **markdown wiki** (90+ pages, all source-backed), and a **Gemini-powered chat** that answers questions about the codebase. No build step, no backend — just a Python file server.
 
-The graph has three independently toggleable layers:
+---
 
-| Layer | What it shows | How it's built |
-|------|---------------|----------------|
-| **Structural** | Imports, Kafka pubsub, OpenAPI contracts, route ↔ API ↔ backend bridges | `tools/build_graph.py` walks the three repos, parses ASTs / regexes / YAMLs |
-| **Similarity** | Pages that talk about the same thing (no embeddings — pure TF-IDF cosine, mutual top-K) | `tools/build_similarity.py` |
-| **Relations** | LLM-extracted typed triples like `colour PUBLISHES_TO MONITOR_DATA_TOPIC`, `arbiter:v2 ALTERNATIVE_TO arbiter:v1` | A Claude session extracts triples; `tools/merge_relations.py` validates and merges them |
+## Prerequisites
 
-You toggle the layers in the graph sidebar.
-
-The **Chat** tab lets you ask questions against the entire knowledge graph + wiki using Gemini 2.5 Flash. Answers are grounded in the wiki and cite pages by path; clicking a citation jumps into the wiki reader.
-
-## Quick start (new hires)
-
-Sit next to the three cloned repos:
+- Python 3.9+
+- The three repos cloned as siblings of this folder:
 
 ```
 AI_Tooling_workshop/
@@ -32,78 +25,141 @@ AI_Tooling_workshop/
 └── lumi-codebase-wiki/   ← you are here
 ```
 
-Run once to build the graph:
+---
+
+## Running the app
+
+### 1. Install dependencies
 
 ```bash
-pip install -r tools/requirements.txt
-python tools/build_graph.py        # → app/data/graph.json    (structural layer)
-python tools/build_similarity.py   # → app/data/similarity.json (TF-IDF layer)
-python tools/build_index.py        # → app/data/wiki-index.json
-# relations.json is optional — see "Expanding the relations layer" below
+pip install -r tools/requirements.txt   # just PyYAML
 ```
 
-Serve the app:
+### 2. Build the graph data
+
+```bash
+./scripts/rebuild-all.sh
+```
+
+This runs four steps in order and prints what it found:
+
+| Step | Script | Output |
+|------|--------|--------|
+| Structural graph | `tools/build_graph.py` | `app/data/graph.json` — 107 nodes, 77 edges |
+| TF-IDF similarity | `tools/build_similarity.py` | `app/data/similarity.json` — 114 similarity edges |
+| Wiki index | `tools/build_index.py` | `app/data/wiki-index.json` + `wiki/index.md` |
+| Health check | `tools/lint_wiki.py` | Orphan/broken-link report (should say "Wiki is clean.") |
+
+> The generated files in `app/data/` are gitignored. Re-run `rebuild-all.sh` after pulling new repo changes.
+
+### 3. Serve
 
 ```bash
 ./scripts/serve.sh
-# → open http://localhost:8000/app/
 ```
 
-That's it. The landing page has a Day 1 / Week 1 / Month 1 tour. The graph view is one click away.
+Open **http://localhost:8000/app/** in your browser.
 
-## What's where
+To use a different port:
 
-| Path | What it is |
-|------|------------|
-| `app/` | The static viewer (HTML + Cytoscape.js + marked.js + Fuse.js) |
-| `app/data/` | Generated `graph.json` and `wiki-index.json` (gitignored) |
-| `wiki/` | Markdown knowledge base — Claude maintains, humans read |
-| `tools/` | Python scripts that walk the three repos and rebuild the graph + index |
-| `scripts/serve.sh` | Wrapper around `python -m http.server 8000` |
-| `CLAUDE.md` | The wiki schema — page conventions and ingest/lint workflows for Claude |
+```bash
+PORT=9000 ./scripts/serve.sh
+```
 
-## How the wiki gets maintained
+### 4. Enable Chat (optional)
 
-The intent is the [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern: the wiki is a **persistent, compounding artifact**. You don't write it by hand — Claude writes and revises it as new docs, code changes, or questions come in. See `CLAUDE.md` for the conventions.
-
-## Adding your first page
-
-1. Read `CLAUDE.md` for the page format
-2. Write a markdown file under `wiki/` with proper frontmatter
-3. Run `python tools/build_index.py` so the sidebar picks it up
-4. (Optional) Re-run `python tools/build_graph.py` if you've added a new node-worthy entity
-
-## Setting up the chat layer
-
-The Chat page calls the Gemini API directly from the browser. To enable it:
+The Chat page calls the Gemini API from the browser. Each user provides their own key — nothing is stored server-side.
 
 ```bash
 cp app/config.example.js app/config.js
-# edit app/config.js — paste your key from https://aistudio.google.com/apikey
+# open app/config.js and replace PASTE_YOUR_GEMINI_API_KEY_HERE
+# get a key at: https://aistudio.google.com/apikey
 ```
 
-`app/config.js` is gitignored. The browser reads it via a `<script>` tag, so no server-side setup is needed. Each user (each browser) provides their own key.
+`app/config.js` is gitignored. The default model is `gemini-2.5-flash` — the entire wiki (~70 k tokens) is sent as context on every turn. Gemini's prompt cache kicks in after turn 1, so follow-up questions are cheap.
 
-By default the chat uses `gemini-2.5-flash` with the entire wiki (~70k tokens) sent on every turn. Gemini 2.5's implicit prompt caching kicks in automatically and discounts the repeated context after turn 1, so a chat session costs roughly **2¢ for the first message and ~½¢ per follow-up**.
+---
 
-Switch to `gemini-2.5-pro` in `config.js` if you want heavier reasoning at higher cost.
+## What's where
 
-## Expanding the relations layer
+```
+lumi-codebase-wiki/
+├── app/                   Static viewer (HTML + Cytoscape.js + marked.js + Fuse.js)
+│   ├── index.html         Landing page — overview, tour cards, search
+│   ├── graph.html         Interactive knowledge graph
+│   ├── wiki.html          Markdown reader with sidebar TOC
+│   ├── chat.html          Gemini-powered Q&A
+│   ├── config.example.js  Template for your Gemini key (copy → config.js)
+│   └── data/              Generated JSON (gitignored — rebuilt by scripts)
+├── wiki/                  90+ markdown pages — one per repo component
+│   ├── overview.md        Start here
+│   ├── tour/              day-1 / week-1 / month-1 onboarding paths
+│   ├── architecture/      System overview, Kafka topics, repos, deployment
+│   ├── ai-continuous/     Monitors, arbiters, monitor-relay, common utils
+│   ├── ai-core/           V2 modules + agreed data schema
+│   ├── web/               Routes, API domains, Kubb pipeline, components
+│   └── concepts/          Monitor, arbiter, protocol, ledger, custom-agent
+├── tools/                 Python build scripts
+│   ├── build_graph.py     Walks 3 repos → graph.json
+│   ├── build_similarity.py  TF-IDF cosine → similarity.json
+│   ├── build_index.py     Reads wiki frontmatter → wiki-index.json
+│   ├── lint_wiki.py       Orphan/broken-link checker
+│   └── merge_relations.py Validates LLM-extracted typed triples → relations.json
+├── scripts/
+│   ├── rebuild-all.sh     Runs all four build steps in order
+│   └── serve.sh           python -m http.server wrapper
+└── CLAUDE.md              Wiki conventions — read this before editing any page
+```
 
-The shipped `app/data/relations.json` covers ~63 typed triples extracted from the 11 hand-written exemplar pages. Adding more is a 3-step Claude Code session:
+---
 
-1. Pick a wiki page (or a batch). Open it in Claude.
-2. Ask: *"Extract typed triples from this page using the predicate whitelist in `tools/merge_relations.py`. Return a JSON object with a `triples` array. Use only graph-node IDs from `app/data/graph.json`."* Pipe Claude's JSON to a file.
-3. Run `python tools/merge_relations.py --in extracted.json`. Invalid triples (unknown nodes, bad predicates, self-loops) are rejected with reasons.
+## The graph layers
+
+The graph has three independently toggleable layers (sidebar → Layers):
+
+| Layer | What it shows | How it's built |
+|-------|---------------|----------------|
+| **Structural** (on by default) | Imports, Kafka pubsub, API contracts, route↔API↔backend bridges | AST + regex walk of all three repos |
+| **Similarity** | Pages that talk about the same things — no embeddings, pure TF-IDF cosine mutual top-K | `build_similarity.py` |
+| **Relations** | Typed triples: `colour PUBLISHES_TO MONITOR_DATA_TOPIC`, `arbiter:v2 ALTERNATIVE_TO arbiter:v1`, … | LLM-extracted, validated by `merge_relations.py` |
+
+**Graph interactions:**
+
+- **Click** a node → wiki page loads in the side panel
+- **Focus 2-hop ⬡** (button in side panel) → hides everything outside 2 connections; sidebar gets a reset button
+- **Similarity edges** auto-hide when zoomed out; reappear when zoomed in
+- **Relations edge labels** appear on hover only
+- Node **size** scales with number of connections (high-degree hubs are visually larger)
+- Filter chips in the sidebar toggle by repo, node type, or edge kind
+
+---
+
+## Maintaining the wiki
+
+The wiki follows the [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern — Claude writes and revises pages, humans read. See `CLAUDE.md` for page format, naming conventions, and the ingest/lint workflows.
+
+**Adding a page:**
+
+```bash
+# 1. Write wiki/your-section/page-name.md with correct frontmatter (see CLAUDE.md)
+# 2. Rebuild the index so the sidebar picks it up
+python tools/build_index.py
+# 3. Optional: re-run the graph if you added a new node-worthy entity
+python tools/build_graph.py
+```
+
+**Adding relations triples:**
+
+```bash
+# Ask Claude to extract triples from a wiki page, save to a file, then:
+python tools/merge_relations.py --in extracted.json
+# Invalid triples (unknown node IDs, bad predicates, self-loops) are rejected with reasons.
+```
 
 Allowed predicates: `USES`, `COMPOSES`, `PUBLISHES_TO`, `SUBSCRIBES_TO`, `DEPENDS_ON`, `IS_A_KIND_OF`, `EXAMPLE_OF`, `ALTERNATIVE_TO`, `MAINTAINED_BY`, `DOCUMENTED_BY`, `REFERENCED_BY`.
 
+---
+
 ## Why no embeddings?
 
-The TF-IDF + LLM-triples combo gets you ~95% of the value of a vector-embedding knowledge graph for an English-only, single-domain wiki of this size, with **zero infra and zero API cost** for the deterministic similarity layer. Embeddings buy you cross-language semantics and synonym tolerance — neither matter much for a 100-page onboarding wiki where the controlled vocabulary is small.
-
-## Known gaps in v1
-
-- Stubs for ~70 graph nodes; only ~6 pages are hand-written
-- The 4th repo `lumi-API` (used by Kubb codegen) is referenced but not cloned locally — it shows up as a "missing" node
-- No live LLM Q&A in the app yet (deliberately — keeps it static and credentials-free)
+TF-IDF + LLM-typed triples gives ~95% of the value of a vector knowledge graph for a single-domain, English-only wiki at this scale — with zero infra and zero API cost for the similarity layer. Embeddings buy synonym tolerance and cross-language semantics; neither matters much for a 100-page onboarding wiki with a small controlled vocabulary.

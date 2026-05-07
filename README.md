@@ -89,26 +89,32 @@ PORT=9000 ./scripts/serve.sh
 
 The server is just `python3 -m http.server` — it has no state and no API. Stopping it with Ctrl-C is safe.
 
-### Step 4 — Enable Chat (optional)
+### Step 4 — Add your Gemini API key (required for Chat)
 
-The Chat tab requires a Gemini API key. Each person provides their own — nothing is stored server-side.
+The Chat tab calls the Gemini API directly from the browser. You need to add your own key before using it — no key is bundled with the repo.
 
-```bash
-cp app/config.example.js app/config.js
-```
+**1. Get a free key**
 
-Open `app/config.js` and replace `PASTE_YOUR_GEMINI_API_KEY_HERE` with a real key. Get one free at **[aistudio.google.com/apikey](https://aistudio.google.com/apikey)**.
+Go to **[aistudio.google.com/apikey](https://aistudio.google.com/apikey)**, sign in with a Google account, and create a new key. It's free for personal use.
+
+**2. Paste it into `app/config.js`**
+
+Open `app/config.js` (already present in the repo) and replace the empty string with your key:
 
 ```js
 window.LUMI_GEMINI = {
-  apiKey: "AIza...",            // ← your key
+  apiKey: "AIza...",            // ← paste your key here
   model:  "gemini-2.5-flash",   // or "gemini-2.5-pro" for heavier reasoning
   temperature: 0.4,
   maxOutputTokens: 4096,
 };
 ```
 
-`app/config.js` is gitignored so your key is never committed. The entire wiki (~70 k tokens) is sent as context on every turn; Gemini's prompt cache discounts it after the first message, making follow-ups cheap.
+**3. That's it — no restart needed**
+
+Reload the browser and the Chat tab will work immediately.
+
+> `app/config.js` is gitignored — your key will never be committed or pushed.
 
 ---
 
@@ -117,7 +123,7 @@ window.LUMI_GEMINI = {
 ```bash
 # One-time setup
 pip install -r tools/requirements.txt
-cp app/config.example.js app/config.js   # then paste your Gemini key
+# Open app/config.js and paste your Gemini API key (get one free at aistudio.google.com/apikey)
 
 # Every time (after cloning, or after pulling repo changes)
 ./scripts/rebuild-all.sh

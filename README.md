@@ -1,9 +1,5 @@
 # Lumi Codebase Wiki
 
-Built by **Panos** and **Aaron** — a shared plan, two complementary focus areas:
-- **Panos** — UI design and app serving (graph viewer, wiki reader, chat interface, static site architecture)
-- **Aaron** — metadata extraction and wiki content (build tooling, source-code analysis, the 90+ `.md` pages)
-
 ---
 
 A lightweight onboarding companion for the three Lumi repos:
